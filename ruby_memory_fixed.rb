@@ -1,7 +1,4 @@
 require 'nokogiri'
-require 'uuid'
-require 'time'
-require 'objspace'
 require "get_process_mem"
 
 def memory_usage(desc)
@@ -44,11 +41,11 @@ class Testing
     return xml_values
   end
 
-  def example_function(xml, xml_values)
+  def recursive_generation(xml, xml_values)
     xml_values.each do |xml_k, xml_v|
       xml.send(xml_k) do 
         if xml_v.class == Hash 
-          example_function(xml, xml_v)
+          recursive_generation(xml, xml_v)
         else
           xml.text(xml_v)
         end
@@ -79,42 +76,42 @@ class Testing
           if @optimized
             builder2 = Nokogiri::XML::DocumentFragment.parse ""
             Nokogiri::XML::Builder.with(builder2) do |xml2|
-              example_function(xml2, xml_values)
+              recursive_generation(xml2, xml_values)
             end
             xml << builder2.to_xml
           elsif @super_optimized
             builder2 = Nokogiri::XML::DocumentFragment.parse ""
             Nokogiri::XML::Builder.with(builder2) do |xml2|
-              example_function(xml2, xml_values)
+              recursive_generation(xml2, xml_values)
             end
             File.write("output/example.xml", builder2.to_xml, mode: "a")
           else  
-            example_function(xml, xml_values)
+            recursive_generation(xml, xml_values)
           end
-          # puts "#{i}" if i%100 == 0
-          # example_function(xml, xml_values)
         else
           #iterative
-          xml.comment("The entry object is repeated for each organization listed in the directory")
-          xml.entry {
-            xml.fullUrl(:value => "#{i}")
-            xml.resource {
-              xml.Organization(:xmlns => "url") {
-                xml.name(:value => org['field1'])
-                
-                xml.comment('Comment')
-                xml.address {
-                  xml.position{
-                    xml.city(:value => org['field4'])
-                    xml.state(:value => org['field5'])
-                    xml.longitude(:value => org['field6'])
-                    xml.latitude(:value => org['field7'])
-                    xml.altitude(:value => org['field8']) 
+          xml.Profile do 
+            xml.comments("The entry object is repeated for each organization listed in the directory")
+            xml.entry {
+              xml.fullUrl(:value => "#{i}")
+              xml.resource {
+                xml.Organization(:xmlns => "url") {
+                  xml.name(:value => org['field1'])
+                  
+                  xml.comments('Comment')
+                  xml.address {
+                    xml.position{
+                      xml.city(:value => org['field4'])
+                      xml.state(:value => org['field5'])
+                      xml.longitude(:value => org['field6'])
+                      xml.latitude(:value => org['field7'])
+                      xml.altitude(:value => org['field8']) 
+                    }
                   }
                 }
               }
             }
-          }
+          end
         end
         j += 1
       end
